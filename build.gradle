@@ -1,0 +1,73 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "https://files.minecraftforge.net/maven"
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:5.1.44'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+
+// Cargar propiedades desde gradle.properties
+def props = new Properties()
+file("gradle.properties").withInputStream { props.load(it) }
+
+// Configuración de las propiedades
+version = props.getProperty('version')
+group = props.getProperty('group')
+archivesBaseName = props.getProperty('archivesBaseName')
+minecraft_version = props.getProperty('minecraft_version')
+mappings_channel = props.getProperty('mappings_channel')
+mappings_version = props.getProperty('mappings_version')
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+minecraft {
+    version = minecraft_version
+    mappings = mappings_channel + "_" + mappings_version
+    runs {
+        client {
+
+            final def var = workingDirectory project.file('run')
+            var
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'forge'
+        url = 'https://files.minecraftforge.net/maven'
+    }
+}
+
+dependencies {
+    implementation 'org.jetbrains:annotations:24.0.1'
+    // Otras dependencias necesarias para tu mod
+}
+
+processResources {
+    inputs.property "mcversion", project.minecraft.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': project.minecraft.version
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+jar {
+    dependsOn configurations.embed
+    from(configurations.embed.collect { it.isDirectory() ? it : zipTree(it) })
+}
